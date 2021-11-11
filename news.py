@@ -7,8 +7,6 @@ from bs4 import BeautifulSoup
 from pathlib import Path
 
 def run(cmd, lang, additional):      
-    headers = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/50.0.2661.102 Safari/537.36'}
-
     if cmd == 'list':
         links = []
         titles = []
@@ -26,38 +24,24 @@ def run(cmd, lang, additional):
             links = rs['links']
             titles = rs['titles']
         else:
-
-            if lang == 'nhk':
-                res = requests.get('https://www3.nhk.or.jp/news/json16/syuyo.json')
+            if lang == 'nhk' or lang == 'nhk-more':
+                if lang == 'nhk':
+                    res = requests.get('https://www3.nhk.or.jp/news/json16/syuyo.json')
+                else:
+                    res = requests.get('https://www3.nhk.or.jp/news/json16/new_001.json')
                 content = json.loads(res.text)
                 items = content['channel']['item']
                 for item in items:
                     links.append(item['link'])
                     titles.append(item['title'])
-            elif lang == 'nhk-more':
-                res = requests.get('https://www3.nhk.or.jp/news/json16/new_001.json')
-                content = json.loads(res.text)
-                items = content['channel']['item']
-                for item in items:
-                    links.append(item['link'])
-                    titles.append(item['title'])
-            elif lang == 'onu-es':
-                res = requests.get('https://news.un.org/es')
+            elif lang == 'onu-es' or lang == 'onu-fr' or lang == 'onu-ru' or lang == 'onu-pt' or lang == 'onu-sw':
+                sub = lang[4:]
+                res = requests.get('https://news.un.org/' + sub)
                 soup = BeautifulSoup(res.text, 'html.parser')
                 tags = soup.find_all('a')
                 for tag in tags:
                     r = tag.get('href')
-                    if r is not None and r.startswith('/es/story') and len(tag.get_text()) > 0:
-                        href = tag.get('href')
-                        links.append(href)
-                        titles.append(tag.get_text().strip())
-            elif lang == 'onu-fr':
-                res = requests.get('https://news.un.org/fr')
-                soup = BeautifulSoup(res.text, 'html.parser')
-                tags = soup.find_all('a')
-                for tag in tags:
-                    r = tag.get('href')
-                    if r is not None and r.startswith('/fr/story') and len(tag.get_text()) > 0:
+                    if r is not None and r.startswith('/' + sub +'/story') and len(tag.get_text().strip()) > 0:
                         href = tag.get('href')
                         links.append(href)
                         titles.append(tag.get_text().strip())
@@ -71,25 +55,18 @@ def run(cmd, lang, additional):
                         href = tag.get('href')
                         links.append(href)
                         titles.append(tag.get_text().strip())
-            elif lang == 'fr24':
-                res = requests.get('https://www.france24.com/fr/', headers=headers)
+            elif lang == 'fr24' or lang == 'fr24-es':
+                headers = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/50.0.2661.102 Safari/537.36'}
+                sub = lang[4:]
+                if len(sub)==0:
+                    sub = 'fr'
+                res = requests.get('https://www.france24.com/' + sub + '/', headers=headers)
                 soup = BeautifulSoup(res.text, 'html.parser')
                 tags = soup.find_all('a')
                 links = []
                 for tag in tags:
                     r = tag.get('href')
-                    if r is not None and r.startswith('/fr/') and len(r)>50 and len(tag.get_text()) > 0:
-                        href = tag.get('href')
-                        links.append(href)
-                        titles.append(tag.get_text().strip())
-            elif lang == 'fr24-es':
-                res = requests.get('https://www.france24.com/es/', headers=headers)
-                soup = BeautifulSoup(res.text, 'html.parser')
-                tags = soup.find_all('a')
-                links = []
-                for tag in tags:
-                    r = tag.get('href')
-                    if r is not None and r.startswith('/es/') and len(r)>50 and len(tag.get_text()) > 0:
+                    if r is not None and r.startswith('/' + sub + '/') and len(r)>50 and len(tag.get_text()) > 0:
                         href = tag.get('href')
                         links.append(href)
                         titles.append(tag.get_text().strip())
@@ -133,15 +110,16 @@ def run(cmd, lang, additional):
                         titles.append(tag.get_text().strip())
             else:
                 print("unknown website")
-            
-            rs = {
-                'titles' : titles,
-                'links' : links,
-            }
-            js = json.dumps(rs)
-            file = path.open(mode='w')
-            file.write(js)
-            file.close()
+
+            if len(titles)>0 and len(links)>0:
+                rs = {
+                    'titles' : titles,
+                    'links' : links,
+                }
+                js = json.dumps(rs)
+                file = path.open(mode='w')
+                file.write(js)
+                file.close()
         
         typ = additional
         if typ == 'url':
@@ -172,7 +150,7 @@ def run(cmd, lang, additional):
                     text = paragraph.get_text('\n').strip()
                     if text is not None and text != '':
                         pargs.append(text)
-        elif lang == 'onu-es' or lang == 'onu-fr':
+        elif lang == 'onu-es' or lang == 'onu-fr' or lang == 'onu-ru' or lang == 'onu-pt' or lang == 'onu-sw':
             res = requests.get('https://news.un.org' + url)
             soup = BeautifulSoup(res.text, 'html.parser')
             title = soup.find('h1', {'class': 'story-title'})
@@ -260,7 +238,7 @@ def run(cmd, lang, additional):
             print()
 
 def help():
-    print(['nhk','nhk-more','fr24','fr24-es','onu-es','onu-fr','rtve','detik','bh-sg','bh-my','milenio'])
+    print(['nhk','nhk-more','fr24','fr24-es','rtve','detik','bh-sg','bh-my','milenio','onu-es','onu-sw','onu-pt','onu-ru','onu-fr'])
 
 if len(sys.argv)<=1:
     help()
