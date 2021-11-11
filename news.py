@@ -169,7 +169,7 @@ def run(cmd, lang, additional):
             sections = soup.find_all('section', {'class': 'content--detail-main'})
             for section in sections:
                 for paragraph in section.find_all('p'):
-                    text = paragraph.get_text().strip()
+                    text = paragraph.get_text('\n').strip()
                     if text is not None and text != '':
                         pargs.append(text)
         elif lang == 'onu-es' or lang == 'onu-fr':
