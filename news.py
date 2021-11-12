@@ -62,9 +62,10 @@ def run(cmd, lang, additional):
                         titles.append(tag.get_text().strip())
             elif lang == 'fr24' or lang == 'fr24-es':
                 headers = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/50.0.2661.102 Safari/537.36'}
-                sub = lang[4:]
-                if len(sub)==0:
+                if len(lang)<=4:
                     sub = 'fr'
+                else:
+                    sub = lang[5:]
                 res = requests.get('https://www.france24.com/' + sub + '/', headers=headers)
                 soup = BeautifulSoup(res.text, 'html.parser')
                 tags = soup.find_all('a')
