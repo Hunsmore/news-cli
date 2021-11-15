@@ -160,10 +160,17 @@ def run(cmd, lang, additional):
                 soup = BeautifulSoup(res.text, 'html.parser')
                 title = soup.find('h1', {'content--title'}).find('span')
                 tit = title.get_text().strip()
-                sections = soup.find_all('section', {'class': 'content--detail-main'})
+                summary = soup.find('p', {'class':'content--summary'}).get_text().strip()
+                if summary is not None:
+                    pargs.append(summary)
+                sections = soup.find('div', {'class': 'content--detail-more none-mobile'}).find_all('section')
                 for section in sections:
-                    for paragraph in section.find_all('p'):
-                        text = paragraph.get_text('\n').strip()
+                    for paragraph in section.find_all('h2', {'class': 'body-title'}):
+                        text = paragraph.get_text("\n").strip()
+                        if text is not None and text != '':
+                            pargs.append(text)
+                    for paragraph in section.find_all('div', {'class': 'body-text'}):
+                        text = paragraph.get_text("\n").strip()
                         if text is not None and text != '':
                             pargs.append(text)
             elif lang == 'onu-es' or lang == 'onu-fr' or lang == 'onu-ru' or lang == 'onu-pt' or lang == 'onu-sw':
